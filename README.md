@@ -1,7 +1,7 @@
 # Contextual-Cards-Android
 An Android app for understanding Contextual Cards
 
-APK: hhttps://github.com/sonusourav/fampay/blob/master/app-debug.apk
+APK: https://github.com/sonusourav/fampay/blob/master/app-debug.apk
 
 ## Screenshots
 
