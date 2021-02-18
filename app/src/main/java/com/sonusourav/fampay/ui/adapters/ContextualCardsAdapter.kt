@@ -14,6 +14,7 @@ import android.view.animation.Animation
 import android.view.animation.TranslateAnimation
 import android.widget.*
 import android.widget.LinearLayout
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
@@ -137,6 +138,13 @@ class ContextualCardsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                     val temp = start
                     start = end
                     end = temp
+                    if(dismissNowCv.isVisible){
+                        dismissNowCv.visibility = View.GONE
+                        remindLaterCv.visibility = View.GONE
+                    }else{
+                        dismissNowCv.visibility = View.VISIBLE
+                        remindLaterCv.visibility = View.VISIBLE
+                    }
                 }
 
                 override fun onAnimationRepeat(animation: Animation) {}
