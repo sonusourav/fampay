@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity(), OnItemRemoveListener {
     }
 
     private fun setupUI() {
-        supportActionBar?.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM;
+        supportActionBar?.displayOptions = ActionBar.DISPLAY_SHOW_CUSTOM
         supportActionBar?.setDisplayShowCustomEnabled(true)
         supportActionBar?.setCustomView(R.layout.action_bar)
         supportActionBar?.setBackgroundDrawable( ColorDrawable(resources.getColor(R.color.white)))
@@ -54,7 +54,7 @@ class MainActivity : AppCompatActivity(), OnItemRemoveListener {
 
     private fun setupObserver() {
         val progressBar = findViewById<ProgressBar>(R.id.progress_bar)
-        cardGroupViewModel.getCards().observe(this, Observer {
+        cardGroupViewModel.getCards().observe(this, {
             when (it.status) {
                 Status.SUCCESS -> {
                     progressBar.visibility = View.GONE
@@ -76,10 +76,6 @@ class MainActivity : AppCompatActivity(), OnItemRemoveListener {
         })
     }
 
-    private fun renderList(cards: List<CardGroup>) {
-        contextualCardsAdapter.addData(cards)
-    }
-
     private fun setupViewModel() {
         cardGroupViewModel = ViewModelProviders.of(this, ViewModelFactory(ApiHelper(ApiServiceImpl()))).get(CardGroupViewModel::class.java)
         cardGroupViewModel.init()
@@ -93,6 +89,6 @@ class MainActivity : AppCompatActivity(), OnItemRemoveListener {
     }
 
     override fun onItemRemoved(position: Int) {
-        Toast.makeText(applicationContext, "Item removed", Toast.LENGTH_SHORT).show();
+        Toast.makeText(applicationContext, "Item removed", Toast.LENGTH_SHORT).show()
     }
 }

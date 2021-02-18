@@ -1,8 +1,11 @@
 package com.sonusourav.fampay.ui.adapters
 
+import android.content.Context
+import android.content.Intent
 import android.graphics.Color
+import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
-import android.util.Log
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.OnLongClickListener
@@ -10,6 +13,7 @@ import android.view.ViewGroup
 import android.view.animation.Animation
 import android.view.animation.TranslateAnimation
 import android.widget.*
+import android.widget.LinearLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
@@ -31,6 +35,46 @@ class ContextualCardsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private lateinit var onItemRemoveListener: OnItemRemoveListener
     private lateinit var pref: SharedPref
 
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        pref = SharedPref(parent.context)
+        return if (!scrollable) NonScrollableLLViewHolder(LayoutInflater.from(parent.context)
+                .inflate(R.layout.horizontal_non_scrollable_item_layout, parent, false)) else ScrollableViewHolder(LayoutInflater.from(parent.context)
+                .inflate(R.layout.horizontal_scrollable_item_layout, parent, false))
+    }
+
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        when (holder.itemViewType) {
+            1 -> if (!scrollable) layNonScrollableSmallDisplayCard(holder as NonScrollableLLViewHolder,
+                    cardGroupList[position].cards) else layScrollableSmallDisplayCard(holder as ScrollableViewHolder,
+                    cardGroupList[position].cards)
+            3 -> if (!pref.isDismissed(PREF, IS_BIG_CARD_DISMISSED)) {
+                layNonScrollableBigCards(holder as NonScrollableLLViewHolder, cardGroupList[position].cards, position)
+            }
+            9 -> layScrollableDynamicCard(holder as ScrollableViewHolder, cardGroupList[position].cards)
+            5 -> layScrollableImageCard(holder as ScrollableViewHolder,
+                    cardGroupList[position].cards)
+            6 -> layNonScrollableSmallArrowCard(holder as NonScrollableLLViewHolder,
+                    cardGroupList[position].cards)
+        }
+    }
+
+    override fun getItemViewType(position: Int): Int {
+        var itemViewTypeNo = 3 //Big Display Card Default
+        scrollable = cardGroupList[position].isScrollable!!
+        when (cardGroupList[position].designType) {
+            "HC3" -> itemViewTypeNo = 3 // Big Display Card
+            "HC1" -> itemViewTypeNo = 1 // Small Display Card
+            "HC9" -> itemViewTypeNo = 9 // Dynamic Card
+            "HC5" -> itemViewTypeNo = 5 // Image Card
+            "HC6" -> itemViewTypeNo = 6 // Small Card with Arrow
+        }
+        return itemViewTypeNo
+    }
+
+    override fun getItemCount(): Int {
+        return cardGroupList.size
+    }
+
     internal class NonScrollableLLViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var nonScrollableLl: LinearLayout = itemView.findViewById(R.id.non_scrollable_ll)
     }
@@ -38,6 +82,29 @@ class ContextualCardsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     internal class ScrollableViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var scrollableHv: HorizontalScrollView = itemView.findViewById(R.id.horizontal_scrollable_item_hv)
         var scrollableLl: LinearLayout = itemView.findViewById(R.id.scrollable_ll)
+    }
+
+    internal class SmallDisplayCardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        var smallDisplayCard: MaterialCardView = itemView.findViewById(R.id.small_display_card)
+        var smallDisplayCardIv: CircleImageView = itemView.findViewById(R.id.small_display_card_iv)
+        var smallDisplayCardTv: TextView = itemView.findViewById(R.id.small_display_card_tv)
+        var aryaStarkTv: TextView = itemView.findViewById(R.id.arya_stark_tv)
+    }
+
+    internal class DynamicCardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        var dynamicCard: MaterialCardView = itemView.findViewById(R.id.dynamic_card)
+        var dynamicCardLl: LinearLayout = itemView.findViewById(R.id.dynamic_card_ll)
+    }
+
+    internal class ImageCardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        var imageCardLl: LinearLayout = itemView.findViewById(R.id.image_card_ll)
+        var imageCard: MaterialCardView = itemView.findViewById(R.id.image_card)
+    }
+
+    internal class SmallCardWithArrowViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        var smallArrowCard: MaterialCardView = itemView.findViewById(R.id.small_arrow_card)
+        var smallArrowCardTv: TextView = itemView.findViewById(R.id.small_card_with_arrow_tv)
+
     }
 
     internal class BigDisplayCardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView), OnLongClickListener {
@@ -90,39 +157,6 @@ class ContextualCardsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             descriptionTv = itemView.findViewById(R.id.description_tv)
             actionBtn = itemView.findViewById(R.id.big_card_action_btn)
             bigCardViewRl.visibility = View.VISIBLE
-        }
-    }
-
-    internal class SmallDisplayCardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var smallDisplayCard: MaterialCardView = itemView.findViewById(R.id.small_display_card)
-        var smallDisplayCardIv: CircleImageView = itemView.findViewById(R.id.small_display_card_iv)
-        var smallDisplayCardTv: TextView = itemView.findViewById(R.id.small_display_card_tv)
-        var aryaStarkTv: TextView = itemView.findViewById(R.id.arya_stark_tv)
-
-    }
-
-    internal class DynamicCardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var dynamicCard: MaterialCardView = itemView.findViewById(R.id.dynamic_card)
-        var dynamicCardLl: LinearLayout = itemView.findViewById(R.id.dynamic_card_ll)
-    }
-
-    internal class ImageCardViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var imageCardLl: LinearLayout
-        var imageCard: MaterialCardView
-
-        init {
-            imageCard = itemView.findViewById(R.id.image_card)
-            imageCardLl = itemView.findViewById(R.id.image_card_ll)
-        }
-    }
-
-    internal class SmallCardWithArrowViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var smallArrowCard: MaterialCardView
-        var smallArrowCardTv: TextView
-
-        init {
-            smallArrowCard = itemView.findViewById(R.id.small_arrow_card)
-            smallArrowCardTv = itemView.findViewById(R.id.small_card_with_arrow_tv)
         }
     }
 
@@ -186,7 +220,13 @@ class ContextualCardsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
             bigDisplayCardViewHolder.actionBtn.text = card.cta!![0].text
             bigDisplayCardViewHolder.actionBtn.setTextColor(Color.parseColor(card.cta!![0].textColor))
-            bigDisplayCardViewHolder.actionBtn.setBackgroundColor(Color.parseColor(card.cta!![0].bgColor))
+            bigDisplayCardViewHolder.actionBtn.background.setColorFilter(Color.parseColor(card.cta!![0].bgColor), PorterDuff.Mode.SRC_ATOP)
+            bigDisplayCardViewHolder.bigCardViewRl.setOnClickListener {
+                openInBrowser(card.url!!, nonScrollableLLViewHolder.itemView.context)
+            }
+            bigDisplayCardViewHolder.actionBtn.setOnClickListener {
+                openInBrowser(card.cta!![0].url!!, nonScrollableLLViewHolder.itemView.context)
+            }
             bigDisplayCardViewHolder.remindLaterCv.setOnClickListener { v: View? ->
                 bigDisplayCardViewHolder.bigCardViewRl.visibility = View.GONE
                 onItemRemoveListener.onItemRemoved(position)
@@ -208,6 +248,9 @@ class ContextualCardsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             //smallCardWithArrowViewHolder.smallArrowCard.setCardBackgroundColor(Color.parseColor(card.bgColor))
             smallCardWithArrowViewHolder.smallArrowCardTv.text = card.title
             nonScrollableLLViewHolder.nonScrollableLl.addView(smallCardWithArrowViewHolder.itemView)
+            smallCardWithArrowViewHolder.smallArrowCard.setOnClickListener {
+                openInBrowser(card.url!!, nonScrollableLLViewHolder.itemView.context)
+            }
         }
     }
 
@@ -222,6 +265,12 @@ class ContextualCardsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             Glide.with(smallDisplayCardViewHolder.itemView)
                     .load(card.icon!!.imageUrl)
                     .into(smallDisplayCardViewHolder.smallDisplayCardIv)
+            smallDisplayCardViewHolder.smallDisplayCard.setOnClickListener {
+                openInBrowser(card.url!!, nonScrollableLLViewHolder.itemView.context)
+            }
+            smallDisplayCardViewHolder.itemView.layoutParams = LinearLayout.LayoutParams(
+                    0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f
+            )
             nonScrollableLLViewHolder.nonScrollableLl.addView(smallDisplayCardViewHolder.itemView)
         }
     }
@@ -237,12 +286,15 @@ class ContextualCardsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             Glide.with(smallDisplayCardViewHolder.itemView)
                     .load(card.icon!!.imageUrl)
                     .into(smallDisplayCardViewHolder.smallDisplayCardIv)
+            smallDisplayCardViewHolder.smallDisplayCard.setOnClickListener {
+                openInBrowser(card.url!!, scrollableViewHolder.itemView.context)
+            }
             scrollableViewHolder.scrollableLl.addView(smallDisplayCardViewHolder.itemView)
         }
     }
 
     private fun layScrollableDynamicCard(scrollableViewHolder: ScrollableViewHolder,
-                                              cards: List<Card>?) {
+                                         cards: List<Card>?) {
         for (card in cards!!) {
             val dynamicCardViewHolder = DynamicCardViewHolder(LayoutInflater.from(scrollableViewHolder.itemView.context)
                     .inflate(R.layout.dynamic_card_item_layout, scrollableViewHolder.itemView as ViewGroup, false))
@@ -262,8 +314,9 @@ class ContextualCardsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                             dynamicCardViewHolder.dynamicCardLl.background = placeholder
                         }
                     })
-
-
+            dynamicCardViewHolder.dynamicCard.setOnClickListener {
+                openInBrowser(card.url!!, scrollableViewHolder.itemView.context)
+            }
             scrollableViewHolder.scrollableLl.addView(dynamicCardViewHolder.itemView)
         }
     }
@@ -289,49 +342,17 @@ class ContextualCardsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                             imageCardViewHolder.imageCardLl.background = placeholder
                         }
                     })
-
+            imageCardViewHolder.imageCard.setOnClickListener {
+                openInBrowser(card.url!!, scrollableLLViewHolder.itemView.context)
+            }
             scrollableLLViewHolder.scrollableLl.addView(imageCardViewHolder.itemView)
         }
     }
 
-    override fun getItemViewType(position: Int): Int {
-        var itemViewTypeNo = 3 //Big Display Card Default
-        scrollable = cardGroupList[position].isScrollable!!
-        when (cardGroupList[position].designType) {
-            "HC3" -> itemViewTypeNo = 3 // Big Display Card
-            "HC1" -> itemViewTypeNo = 1 // Small Display Card
-            "HC9" -> itemViewTypeNo = 9 // Dynamic Card
-            "HC5" -> itemViewTypeNo = 5 // Image Card
-            "HC6" -> itemViewTypeNo = 6 // Small Card with Arrow
-        }
-        return itemViewTypeNo
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        pref = SharedPref(parent.context)
-        return if (!scrollable) NonScrollableLLViewHolder(LayoutInflater.from(parent.context)
-                .inflate(R.layout.horizontal_non_scrollable_item_layout, parent, false)) else ScrollableViewHolder(LayoutInflater.from(parent.context)
-                .inflate(R.layout.horizontal_scrollable_item_layout, parent, false))
-    }
-
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        when (holder.itemViewType) {
-            1 -> if (!scrollable) layNonScrollableSmallDisplayCard(holder as NonScrollableLLViewHolder,
-                    cardGroupList[position].cards) else layScrollableSmallDisplayCard(holder as ScrollableViewHolder,
-                    cardGroupList[position].cards)
-            3 -> if(!pref.isDismissed(PREF,IS_BIG_CARD_DISMISSED)){
-                layNonScrollableBigCards(holder as NonScrollableLLViewHolder, cardGroupList[position].cards,position)
-            }
-            9 -> layScrollableDynamicCard(holder as ScrollableViewHolder, cardGroupList[position].cards)
-            5 -> layScrollableImageCard(holder as ScrollableViewHolder,
-                    cardGroupList[position].cards)
-            6 -> layNonScrollableSmallArrowCard(holder as NonScrollableLLViewHolder,
-                    cardGroupList[position].cards)
-        }
-    }
-
-    override fun getItemCount(): Int {
-        return cardGroupList.size
+    private fun openInBrowser(url: String, context: Context){
+        val uri = Uri.parse(url) // missing 'http://' will cause crash
+        val intent = Intent(Intent.ACTION_VIEW, uri)
+        context.startActivity(intent)
     }
 
     interface OnItemRemoveListener {
